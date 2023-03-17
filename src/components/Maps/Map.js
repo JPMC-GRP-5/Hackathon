@@ -1,30 +1,39 @@
 import React, { useRef, useEffect, useState } from 'react';
 import './Map.css';
-import mapboxgl from 'mapbox-gl'; // eslint-disable-line import/no-webpack-loader-syntax
+
+import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+
 mapboxgl.accessToken =
   'pk.eyJ1IjoiamF5amFuaTk5IiwiYSI6ImNsNThibHUzYjIxYXYzZHBweWhuMnNiaWQifQ.kb8GvAULXbhkvNxChVknwg';
 
 export default function Map(props) {
   const mapContainer = useRef(null);
   const map = useRef(null);
-  const [lng, setLng] = useState(-103.5917);
+  const [long, setLong] = useState(100);
   const [lat, setLat] = useState(42);
-  const [zoom, setZoom] = useState(3);
+  const [zoom, setZoom] = useState(8);
 
-  const hotels = {
-    features: props.allHotels,
-  };
-
-  console.log(hotels)
-
+  // Generating clusters
   useEffect(() => {
+    const hotels = {
+      type: 'FeatureCollection',
+      features: props.hotels,
+    };
+    const places = {
+      type: 'FeatureCollection',
+      features: props.places,
+    };
+
+    console.log(hotels.features[0]);
+    console.log(places);
+
     if (map.current) return; // initialize map only once
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       projection: 'mercator',
       style: 'mapbox://styles/mapbox/streets-v12',
-      center: [lng, lat],
+      center: [hotels.features[0].longitude, hotels.features[0].latitude],
       zoom: zoom,
     });
 
@@ -34,106 +43,88 @@ export default function Map(props) {
       map.current.addSource('hotels', {
         type: 'geojson',
         data: hotels,
-        cluster: true,
-        clusterMaxZoom: 14, // Max zoom to cluster points on
-        clusterRadius: 50, // Radius of each cluster when clustering points (defaults to 50)
+      });
+
+      map.current.addSource('places', {
+        type: 'geojson',
+        data: places,
       });
 
       map.current.addLayer({
-        id: 'clusters',
-        type: 'circle',
-        source: 'hotels',
-        filter: ['has', 'point_count'],
-        paint: {
-          'circle-color': [
-            'step',
-            ['get', 'point_count'],
-            '#73A2D4',
-            10,
-            '#3A78BB',
-            30,
-            '#2B5A8C',
-          ],
-          'circle-radius': ['step', ['get', 'point_count'], 15, 10, 20, 30, 25],
-        },
-      });
-
-      map.current.addLayer({
-        id: 'cluster-count',
-        type: 'symbol',
-        source: 'hotels',
-        filter: ['has', 'point_count'],
-        layout: {
-          'text-field': '{point_count_abbreviated}',
-          'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-          'text-size': 12,
-        },
-      });
-
-      map.current.addLayer({
-        id: 'unclustered-point',
+        id: 'hotels',
         type: 'circle',
         source: 'hotels',
         filter: ['!', ['has', 'point_count']],
         paint: {
-          'circle-color': '#11b4da',
-          'circle-radius': 10,
-          'circle-stroke-width': 1,
-          'circle-stroke-color': '#fff',
+          'circle-color': '#4264fb',
+          'circle-radius': 6,
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#ffffff',
         },
       });
 
-      // inspect a cluster on click
-      map.current.on('click', 'clusters', (e) => {
-        const features = map.current.queryRenderedFeatures(e.point, {
-          layers: ['clusters'],
-        });
-        const clusterId = features[0].properties.cluster_id;
-        map.current
-          .getSource('hotels')
-          .getClusterExpansionZoom(clusterId, (err, zoom) => {
-            if (err) return;
-
-            map.current.easeTo({
-              center: features[0].geometry.coordinates,
-              zoom: zoom,
-            });
-          });
+      map.current.addLayer({
+        id: 'places',
+        type: 'circle',
+        source: 'places',
+        filter: ['!', ['has', 'point_count']],
+        paint: {
+          'circle-color': '#444',
+          'circle-radius': 6,
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#ffffff',
+        },
       });
 
-      map.current.on('click', 'unclustered-point', (e) => {
+      const popup = new mapboxgl.Popup({
+        closeButton: false,
+        closeOnClick: false,
+      });
+
+      map.current.on('mouseenter', 'hotels', (e) => {
+        map.current.getCanvas().style.cursor = 'pointer';
         const coordinates = e.features[0].geometry.coordinates.slice();
-        const { popUpMarkup } = e.features[0].properties;
+        let description = e.features[0].properties.name;
+
+        const capitalizedSentence = description
+          .split(' ')
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
 
         while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
           coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
         }
 
-        new mapboxgl.Popup()
-          .setLngLat(coordinates)
-          .setHTML(`${popUpMarkup}`)
-          .addTo(map.current);
+        popup.setLngLat(coordinates).setHTML(capitalizedSentence).addTo(map.current);
       });
 
-      map.current.on('mouseenter', 'clusters', () => {
-        map.current.getCanvas().style.cursor = 'pointer';
-      });
-      map.current.on('mouseleave', 'clusters', () => {
+      map.current.on('mouseleave', 'hotels', (e) => {
         map.current.getCanvas().style.cursor = '';
+        popup.remove();
+      });
+
+      map.current.on('mouseenter', 'places', (e) => {
+        map.current.getCanvas().style.cursor = 'pointer';
+        const coordinates = e.features[0].geometry.coordinates.slice();
+        const description = e.features[0].properties.name;
+        const capitalizedSentence = description
+        .split(' ')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+
+        while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+          coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+        }
+
+        popup.setLngLat(coordinates).setHTML(capitalizedSentence).addTo(map.current);
+      });
+
+      map.current.on('mouseleave', 'places', (e) => {
+        map.current.getCanvas().style.cursor = '';
+        popup.remove();
       });
     });
-  });
-
-  // console.log(map.current)
-
-  // useEffect(() => {
-  //   if (!map.current) return; // wait for map to initialize
-  //   map.current.on('move', () => {
-  //     setLng(map.current.getCenter().lng.toFixed(4));
-  //     setLat(map.current.getCenter().lat.toFixed(4));
-  //     setZoom(map.current.getZoom().toFixed(2));
-  //   });
-  // });
+  }, []);
 
   return (
     <div>
