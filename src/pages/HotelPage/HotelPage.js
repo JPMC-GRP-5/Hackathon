@@ -1,10 +1,11 @@
-import React from 'react'
+import React from 'react';
 import './HotelPage.css';
+import MapParent from '../../components/Maps/MapParent';
 
 const HotelPage = () => {
   return (
-    <div>HotelPage</div>
-  )
-}
+    <MapParent />
+  );
+};
 
-export default HotelPage
+export default HotelPage;
