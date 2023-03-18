@@ -7,6 +7,7 @@ import moment from "moment";
 import { Slide } from "react-awesome-reveal";
 import axios from "axios";
 import { useSearchParams } from "react-router-dom";
+import MapParent from "../../components/Maps/MapParent";
 
 const Itinerary = () => {
 	// let [days,setDays] = useState([
@@ -83,8 +84,10 @@ const Itinerary = () => {
 				</div>
 			</div>
 			<div className="itinerary-container-rhs mr-10 mt-48">
-				<div className="itinerary-rhs-map"> Map </div>
-				<div className="bg-[#122E48] shadow-xl text-white p-4 rounded-md">
+				<div className="itinerary-rhs-map ">
+					<MapParent city={city} />
+				</div>
+				<div className="bg-[#122E48] shadow-xl mt-10 text-white p-4 rounded-md">
 					<div className="text-lg">Estimated Expenses:</div>
 					{data.map((day, index) => {
 						return (

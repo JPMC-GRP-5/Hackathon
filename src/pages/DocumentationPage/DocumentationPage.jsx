@@ -12,9 +12,19 @@ function DocumentationPage() {
 					type: "string",
 					description: "City name",
 				},
+				{
+					name: "budget",
+					type: "number",
+					description: "Budget for the trip (excluding food and hotel)",
+				},
+				{
+					name: "days",
+					type: "number",
+					description: "Number of days for the trip",
+				},
 			],
 			parameters: [],
-			link: "https://voyager-d2bo.onrender.com/places?city=<city name>",
+			link: "https://voyager-d2bo.onrender.com/places?city=<city name>&budget=<budget>&days=<days>",
 		},
 		{
 			method: "GET",
@@ -62,14 +72,6 @@ function DocumentationPage() {
 		},
 		{
 			method: "GET",
-			path: "/hotels/city",
-			description: "Get Available Cities",
-			queries: [],
-			parameters: [],
-			link: "https://voyager-d2bo.onrender.com/hotels/city?city=<city name>",
-		},
-		{
-			method: "GET",
 			path: "/hotels/nearby",
 			description: "Get Nearby Hotels",
 			queries: [
@@ -104,7 +106,7 @@ function DocumentationPage() {
 	];
 
 	const copyToClipboard = (text) => {
-		alert("Copied to clipboard");
+		// alert("Copied to clipboard");
 		navigator.clipboard.writeText(text);
 	};
 

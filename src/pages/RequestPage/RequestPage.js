@@ -51,7 +51,7 @@ const RequestPage = () => {
 					/>
 					<div>
 						<div className="text-[#122E48] text-[18px] font-bold uppercase mt-5">
-							Select Budget
+							Enter Budget (excluding Food, Travel & Hotel)
 						</div>
 						<div className="flex flex-row mt-2">
 							<input
